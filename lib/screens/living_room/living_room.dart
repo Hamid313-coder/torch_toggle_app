@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:lamp_app/screens/living_room/widgets/lamp.dart';
+import 'package:lamp_app/screens/living_room/widgets/lamp_blub.dart';
+import 'package:lamp_app/screens/living_room/widgets/lamp_hanger_rope.dart';
+import 'package:lamp_app/screens/living_room/widgets/lamp_switch.dart';
+import 'package:lamp_app/screens/living_room/widgets/lamp_switch_rope.dart';
+import 'package:torch_light/torch_light.dart';
 
 const darkGray = Color(0xFF232323);
 const bulbOnColor = Color(0xFFFFE12C);
@@ -13,6 +19,8 @@ class LivingRoomScreen extends StatefulWidget {
 }
 
 class _LivingRoomScreenState extends State<LivingRoomScreen> {
+  bool isOn = false;
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -23,28 +31,55 @@ class _LivingRoomScreenState extends State<LivingRoomScreen> {
         fit: StackFit.expand,
         children: [
           LampHangerRope(height: screenHeight * 0.15),
+          LampBlub(
+            isOn: isOn,
+            screenWidth: screenWidth,
+            screenHeight: screenHeight,
+          ),
+          Lamp(
+            isOn: isOn,
+            screenHeight: screenHeight,
+            screenWidth: screenWidth,
+          ),
+          LampSwitch(
+            isOn: isOn,
+            screenHeight: screenHeight,
+            screenWidth: screenWidth,
+            onTap: toggleTorch,
+          ),
+          LampSwitchRope(
+            isOn: isOn,
+            screenHeight: screenHeight,
+            screenWidth: screenWidth,
+          ),
         ],
       ),
     );
   }
-}
 
-class LampHangerRope extends StatelessWidget {
-  const LampHangerRope({
-    super.key,
-    required this.height,
-  });
+  void toggleTorch() async {
+    try {
+      final hasTorch = await TorchLight.isTorchAvailable();
+      if (!hasTorch) {
+        showSnackBar('Torch is not available!');
+        return;
+      }
 
-  final double height;
+      isOn ? await TorchLight.disableTorch() : await TorchLight.enableTorch();
 
-  @override
-  Widget build(BuildContext context) {
-    return Positioned(
-      top: 0,
-      left: 80,
-      width: 12,
-      height: height,
-      child: const ColoredBox(color: darkGray),
-    );
+      setState(() {
+        isOn = !isOn;
+      });
+    } catch (e) {
+      print(e.toString());
+      showSnackBar('Something went!');
+    }
+  }
+
+  void showSnackBar(String message) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(message),
+    ));
   }
 }
